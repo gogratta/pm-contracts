@@ -15,19 +15,30 @@ const CategoricalEvent = artifacts.require('CategoricalEvent')
 
 const contracts = [EventFactory, LMSRMarketMakerFactory, LMSRMarketMaker, WETH9, OutcomeToken, CategoricalEvent]
 
-contract('MarketMaker', function(accounts) {
+contract('LMSRMarketMaker', function(accounts) {
     let eventFactory
     let lmsrMarketMakerFactory
     let etherToken
+    let ipfsHash, centralizedOracle, event
+    const numOutcomes = 2
 
     before(testGas.createGasStatCollectorBeforeHook(contracts))
     after(testGas.createGasStatCollectorAfterHook(contracts))
 
     beforeEach(async () => {
         eventFactory = await EventFactory.deployed()
-        lmsrMarketMakerFactory = await LMSRMarketMakerFactory.deployed()
         etherToken = await WETH9.deployed()
+        lmsrMarketMakerFactory = await LMSRMarketMakerFactory.deployed()
+
+        // create event
+        ipfsHash = 'QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG'
+        centralizedOracle = accounts[1]
+        event = getParamFromTxEvent(
+            await eventFactory.createCategoricalEvent(etherToken.address, centralizedOracle, numOutcomes),
+            'categoricalEvent', CategoricalEvent
+        )
     })
+
 
     it.skip('should move price of an outcome to 0 after participants sell lots of that outcome to lmsrMarketMaker maker', async () => {
         // Create event
@@ -224,32 +235,6 @@ contract('MarketMaker', function(accounts) {
         }
 
         assert.equal(await etherToken.balanceOf.call(accounts[trader]), initialWETH9Count - cost.valueOf())
-    })
-})
-
-
-contract('LMSRMarketMaker', function (accounts) {
-    let eventFactory
-    let etherToken
-    let lmsrMarketMakerFactory
-    let ipfsHash, centralizedOracle, event
-    const numOutcomes = 2
-
-    before(testGas.createGasStatCollectorBeforeHook(contracts))
-    after(testGas.createGasStatCollectorAfterHook(contracts))
-
-    beforeEach(async () => {
-        eventFactory = await EventFactory.deployed()
-        etherToken = await WETH9.deployed()
-        lmsrMarketMakerFactory = await LMSRMarketMakerFactory.deployed()
-
-        // create event
-        ipfsHash = 'QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG'
-        centralizedOracle = accounts[1]
-        event = getParamFromTxEvent(
-            await eventFactory.createCategoricalEvent(etherToken.address, centralizedOracle, numOutcomes),
-            'categoricalEvent', CategoricalEvent
-        )
     })
 
     it('can be created and closed', async () => {
